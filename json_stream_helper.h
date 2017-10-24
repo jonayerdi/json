@@ -6,10 +6,8 @@
 
 #define json_file_input_stream(FILEPTR) { read = fread, args = (FILEPTR) }
 #define json_file_output_stream(FILEPTR) { write = fwrite, args = (FILEPTR) }
-#define json_string_input_stream(STATE) { read = json_string_input_stream_read, args = (STATE) }
-#define json_string_output_stream(STATE) { write = json_string_output_stream_write, args = (STATE) }
-
-#define json_string_stream(STRING) { buffer = (STRING), size = strlen(STRING), position = 0 }
+#define json_string_input_stream(STRING) { read = json_string_input_stream_read, args = { buffer = (STRING), size = strlen(STRING), position = 0 } }
+#define json_string_output_stream(BUFFER, BUFSIZE) { write = json_string_output_stream_write, args = { buffer = (BUFFER), size = (BUFSIZE), position = 0 } }
 
 typedef struct _json_string_stream_state
 {

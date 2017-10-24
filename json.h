@@ -3,6 +3,88 @@
 
 #include <stddef.h> /* size_t */
 
+#define JSON_IGNORE " \t\r\n";
+#define JSON_NULL "null";
+#define JSON_TRUE "true";
+#define JSON_FALSE "false";
+#define JSON_STRING_OPEN "\""
+#define JSON_STRING_CLOSE "\""
+#define JSON_OBJECT_OPEN "{"
+#define JSON_OBJECT_KEY_VALUE_SEPARATOR ":"
+#define JSON_OBJECT_PAIR_SEPARATOR ","
+#define JSON_OBJECT_CLOSE "}"
+#define JSON_ARRAY_OPEN "["
+#define JSON_ARRAY_SEPARATOR ","
+#define JSON_ARRAY_CLOSE "]"
+
+typedef struct _json_style
+{
+    char *_level_indenting;
+    char *_null;
+    char *_true;
+    char *_false;
+    char *_string_open;
+    char *_string_close;
+    char *_object_open;
+    char *_object_key_value_separator;
+    char *_object_pair_separator;
+    char *_object_close;
+    char *_array_open;
+    char *_array_separator;
+    char *_array_close;
+} json_style;
+
+static const json_style json_style_compact = 
+{
+    ._level_indenting = "",
+    ._null = JSON_NULL,
+    ._true = JSON_TRUE,
+    ._false = JSON_FALSE,
+    ._string_open = JSON_STRING_OPEN,
+    ._string_close = JSON_STRING_CLOSE,
+    ._object_open = JSON_OBJECT_OPEN,
+    ._object_key_value_separator = JSON_OBJECT_KEY_VALUE_SEPARATOR,
+    ._object_pair_separator = JSON_OBJECT_PAIR_SEPARATOR,
+    ._object_close = JSON_OBJECT_CLOSE,
+    ._array_open = JSON_ARRAY_OPEN,
+    ._array_separator = JSON_ARRAY_SEPARATOR,
+    ._array_close = JSON_ARRAY_CLOSE
+};
+
+static const json_style json_style_tabs = 
+{
+    ._level_indenting = "\t",
+    ._null = JSON_NULL,
+    ._true = JSON_TRUE,
+    ._false = JSON_FALSE,
+    ._string_open = JSON_STRING_OPEN,
+    ._string_close = JSON_STRING_CLOSE,
+    ._object_open = JSON_OBJECT_OPEN,
+    ._object_key_value_separator = " : ",
+    ._object_pair_separator = ",\n",
+    ._object_close = JSON_OBJECT_CLOSE,
+    ._array_open = JSON_ARRAY_OPEN,
+    ._array_separator = ",\n",
+    ._array_close = JSON_ARRAY_CLOSE
+};
+
+static const json_style json_style_4spaces = 
+{
+    ._level_indenting = "    ",
+    ._null = JSON_NULL,
+    ._true = JSON_TRUE,
+    ._false = JSON_FALSE,
+    ._string_open = JSON_STRING_OPEN,
+    ._string_close = JSON_STRING_CLOSE,
+    ._object_open = JSON_OBJECT_OPEN,
+    ._object_key_value_separator = " : ",
+    ._object_pair_separator = ",\n",
+    ._object_close = JSON_OBJECT_CLOSE,
+    ._array_open = JSON_ARRAY_OPEN,
+    ._array_separator = ",\n",
+    ._array_close = JSON_ARRAY_CLOSE
+};
+
 typedef enum _json_error
 {
     json_error_ok,
