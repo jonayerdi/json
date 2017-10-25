@@ -8,6 +8,7 @@
 #define JSON_TRUE "true";
 #define JSON_FALSE "false";
 #define JSON_STRING_OPEN "\""
+#define JSON_STRING_SPECIAL "\\"
 #define JSON_STRING_CLOSE "\""
 #define JSON_OBJECT_OPEN "{"
 #define JSON_OBJECT_KEY_VALUE_SEPARATOR ":"
@@ -34,63 +35,63 @@ typedef struct _json_style
     char *_array_close;
 } json_style;
 
-static const json_style json_style_compact = 
-{
-    ._level_indenting = "",
-    ._null = JSON_NULL,
-    ._true = JSON_TRUE,
-    ._false = JSON_FALSE,
-    ._string_open = JSON_STRING_OPEN,
-    ._string_close = JSON_STRING_CLOSE,
-    ._object_open = JSON_OBJECT_OPEN,
-    ._object_key_value_separator = JSON_OBJECT_KEY_VALUE_SEPARATOR,
-    ._object_pair_separator = JSON_OBJECT_PAIR_SEPARATOR,
-    ._object_close = JSON_OBJECT_CLOSE,
-    ._array_open = JSON_ARRAY_OPEN,
-    ._array_separator = JSON_ARRAY_SEPARATOR,
-    ._array_close = JSON_ARRAY_CLOSE
-};
+#define JSON_STYLE_COMPACT \
+{ \
+    ._level_indenting = "", \
+    ._null = JSON_NULL, \
+    ._true = JSON_TRUE, \
+    ._false = JSON_FALSE, \
+    ._string_open = JSON_STRING_OPEN, \
+    ._string_close = JSON_STRING_CLOSE, \
+    ._object_open = JSON_OBJECT_OPEN, \
+    ._object_key_value_separator = JSON_OBJECT_KEY_VALUE_SEPARATOR, \
+    ._object_pair_separator = JSON_OBJECT_PAIR_SEPARATOR, \
+    ._object_close = JSON_OBJECT_CLOSE, \
+    ._array_open = JSON_ARRAY_OPEN, \
+    ._array_separator = JSON_ARRAY_SEPARATOR, \
+    ._array_close = JSON_ARRAY_CLOSE \
+}
 
-static const json_style json_style_tabs = 
-{
-    ._level_indenting = "\t",
-    ._null = JSON_NULL,
-    ._true = JSON_TRUE,
-    ._false = JSON_FALSE,
-    ._string_open = JSON_STRING_OPEN,
-    ._string_close = JSON_STRING_CLOSE,
-    ._object_open = JSON_OBJECT_OPEN,
-    ._object_key_value_separator = " : ",
-    ._object_pair_separator = ",\n",
-    ._object_close = JSON_OBJECT_CLOSE,
-    ._array_open = JSON_ARRAY_OPEN,
-    ._array_separator = ",\n",
-    ._array_close = JSON_ARRAY_CLOSE
-};
+#define JSON_STYLE_TABS \
+{ \
+    ._level_indenting = "\t", \
+    ._null = JSON_NULL, \
+    ._true = JSON_TRUE, \
+    ._false = JSON_FALSE, \
+    ._string_open = JSON_STRING_OPEN, \
+    ._string_close = JSON_STRING_CLOSE, \
+    ._object_open = JSON_OBJECT_OPEN, \
+    ._object_key_value_separator = " : ", \
+    ._object_pair_separator = ",\n", \
+    ._object_close = JSON_OBJECT_CLOSE, \
+    ._array_open = JSON_ARRAY_OPEN, \
+    ._array_separator = ",\n", \
+    ._array_close = JSON_ARRAY_CLOSE \
+}
 
-static const json_style json_style_4spaces = 
-{
-    ._level_indenting = "    ",
-    ._null = JSON_NULL,
-    ._true = JSON_TRUE,
-    ._false = JSON_FALSE,
-    ._string_open = JSON_STRING_OPEN,
-    ._string_close = JSON_STRING_CLOSE,
-    ._object_open = JSON_OBJECT_OPEN,
-    ._object_key_value_separator = " : ",
-    ._object_pair_separator = ",\n",
-    ._object_close = JSON_OBJECT_CLOSE,
-    ._array_open = JSON_ARRAY_OPEN,
-    ._array_separator = ",\n",
-    ._array_close = JSON_ARRAY_CLOSE
-};
+#define JSON_STYLE_4SPACES \
+{ \
+    ._level_indenting = "    ", \
+    ._null = JSON_NULL, \
+    ._true = JSON_TRUE, \
+    ._false = JSON_FALSE, \
+    ._string_open = JSON_STRING_OPEN, \
+    ._string_close = JSON_STRING_CLOSE, \
+    ._object_open = JSON_OBJECT_OPEN, \
+    ._object_key_value_separator = " : ", \
+    ._object_pair_separator = ",\n", \
+    ._object_close = JSON_OBJECT_CLOSE, \
+    ._array_open = JSON_ARRAY_OPEN, \
+    ._array_separator = ",\n", \
+    ._array_close = JSON_ARRAY_CLOSE \
+}
 
-typedef enum _json_error
+typedef enum _json_state
 {
-    json_error_ok,
-    json_error_parse_failed,
-    json_error_stream_failed
-} json_error;
+    json_state_ok,
+    json_state_parse_error,
+    json_state_stream_error
+} json_state;
 
 typedef enum _json_type
 {
@@ -144,16 +145,16 @@ typedef struct _json_output_stream
     void *args;
 } json_output_stream;
 
-json_error json_read_string(json_input_stream input, json_string *data_out);
-json_error json_read_integer(json_input_stream input, json_integer *data_out);
-json_error json_read_decimal(json_input_stream input, json_decimal *data_out);
-json_error json_read_object(json_input_stream input, json_object *data_out);
-json_error json_read_array(json_input_stream input, json_array *data_out);
+json_state json_read_string(json_input_stream input, json_string *data_out);
+json_state json_read_integer(json_input_stream input, json_integer *data_out);
+json_state json_read_decimal(json_input_stream input, json_decimal *data_out);
+json_state json_read_object(json_input_stream input, json_object *data_out);
+json_state json_read_array(json_input_stream input, json_array *data_out);
 
-json_error json_write_string(json_output_stream output, json_string data_in);
-json_error json_write_integer(json_output_stream output, json_integer data_in);
-json_error json_write_decimal(json_output_stream output, json_decimal data_in);
-json_error json_write_object(json_output_stream output, json_object data_in);
-json_error json_write_array(json_output_stream output, json_array data_in);
+json_state json_write_string(json_output_stream output, json_string data_in, json_style *style);
+json_state json_write_integer(json_output_stream output, json_integer data_in, json_style *style);
+json_state json_write_decimal(json_output_stream output, json_decimal data_in, json_style *style);
+json_state json_write_object(json_output_stream output, json_object data_in, json_style *style);
+json_state json_write_array(json_output_stream output, json_array data_in, json_style *style);
 
 #endif /* JSON_H */
