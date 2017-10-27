@@ -1,9 +1,9 @@
 
-project = json
+project = json_test
 output_dir = Debug
 executable = $(project).exe
 pdb = $(project).pdb
-cfiles = json.c
+cfiles = json.c json_test.c
 cc = cl
 cflags = /W3 /GS /Gd /Zi /Od /Ob0 /MDd /TC /Fo: $(output_dir)/ /Fe: $(output_dir)/$(executable) /Fd: $(output_dir)/$(pdb)
 

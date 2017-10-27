@@ -12,6 +12,19 @@
             "cwd": "${workspaceRoot}/Debug",
             "environment": [],
             "externalConsole": true
+        },
+        {
+            "name": "(GDB) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "program": "${workspaceRoot}/Debug/json_test",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/Debug",
+            "environment": [],
+            "externalConsole": true
         }
     ]
 }
