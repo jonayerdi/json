@@ -3,41 +3,48 @@
 
 #include <stddef.h> /* size_t */
 
-#define JSON_IGNORE " \t\r\n";
-#define JSON_NULL "null";
-#define JSON_TRUE "true";
-#define JSON_FALSE "false";
-#define JSON_STRING_OPEN "\""
-#define JSON_STRING_SPECIAL "\\"
-#define JSON_STRING_CLOSE "\""
-#define JSON_OBJECT_OPEN "{"
-#define JSON_OBJECT_KEY_VALUE_SEPARATOR ":"
-#define JSON_OBJECT_PAIR_SEPARATOR ","
-#define JSON_OBJECT_CLOSE "}"
-#define JSON_ARRAY_OPEN "["
-#define JSON_ARRAY_SEPARATOR ","
-#define JSON_ARRAY_CLOSE "]"
+/* json_char conversion */
+#define _J_C(CHAR) ((json_char) (CHAR))
+/* json_string conversion */
+#define _J_S(STR) ((json_string) (STR))
 
+/* Special json characters or strings */
+#define JSON_IGNORE _J_S(" \t\r\n")
+#define JSON_NULL _J_S("null")
+#define JSON_TRUE _J_S("true")
+#define JSON_FALSE _J_S("false")
+#define JSON_STRING_OPEN _J_S("\"")
+#define JSON_STRING_SPECIAL _J_S("\\")
+#define JSON_STRING_CLOSE _J_S("\"")
+#define JSON_OBJECT_OPEN _J_S("{")
+#define JSON_OBJECT_KEY_VALUE_SEPARATOR _J_S(":")
+#define JSON_OBJECT_PAIR_SEPARATOR _J_S(",")
+#define JSON_OBJECT_CLOSE _J_S("}")
+#define JSON_ARRAY_OPEN _J_S("[")
+#define JSON_ARRAY_SEPARATOR _J_S(",")
+#define JSON_ARRAY_CLOSE _J_S("]")
+
+/* json styles for json_write_* */
 typedef struct _json_style
 {
-    char *_level_indenting;
-    char *_null;
-    char *_true;
-    char *_false;
-    char *_string_open;
-    char *_string_close;
-    char *_object_open;
-    char *_object_key_value_separator;
-    char *_object_pair_separator;
-    char *_object_close;
-    char *_array_open;
-    char *_array_separator;
-    char *_array_close;
+    json_string _level_indenting;
+    json_string _null;
+    json_string _true;
+    json_string _false;
+    json_string _string_open;
+    json_string _string_close;
+    json_string _object_open;
+    json_string _object_key_value_separator;
+    json_string _object_pair_separator;
+    json_string _object_close;
+    json_string _array_open;
+    json_string _array_separator;
+    json_string _array_close;
 } json_style;
 
 #define JSON_STYLE_COMPACT \
 { \
-    ._level_indenting = "", \
+    ._level_indenting = _J_S(""), \
     ._null = JSON_NULL, \
     ._true = JSON_TRUE, \
     ._false = JSON_FALSE, \
@@ -54,18 +61,18 @@ typedef struct _json_style
 
 #define JSON_STYLE_TABS \
 { \
-    ._level_indenting = "\t", \
+    ._level_indenting = _J_S("\t"), \
     ._null = JSON_NULL, \
     ._true = JSON_TRUE, \
     ._false = JSON_FALSE, \
     ._string_open = JSON_STRING_OPEN, \
     ._string_close = JSON_STRING_CLOSE, \
     ._object_open = JSON_OBJECT_OPEN, \
-    ._object_key_value_separator = " : ", \
-    ._object_pair_separator = ",\n", \
+    ._object_key_value_separator = _J_S(" : "), \
+    ._object_pair_separator = _J_S(",\n"), \
     ._object_close = JSON_OBJECT_CLOSE, \
     ._array_open = JSON_ARRAY_OPEN, \
-    ._array_separator = ",\n", \
+    ._array_separator = _J_S(",\n"), \
     ._array_close = JSON_ARRAY_CLOSE \
 }
 
@@ -86,6 +93,30 @@ typedef struct _json_style
     ._array_close = JSON_ARRAY_CLOSE \
 }
 
+/* Memory allocator for json_read_* */
+typedef struct _json_allocator
+{
+    void *(*malloc)(size_t size);
+    void (*free)(void);
+} json_allocator;
+
+#define JSON_STD_ALLOCATOR { .malloc = malloc, .free = free }
+
+/* Input stream for json_read_* */
+typedef struct _json_input_stream
+{
+    size_t (*read)(void *data, size_t size, size_t count, void *args);
+    void *args;
+} json_input_stream;
+
+/* Output stream for json_write_* */
+typedef struct _json_output_stream
+{
+    size_t (*write)(void *data, size_t size, size_t count, void *args);
+    void *args;
+} json_output_stream;
+
+/* Return type for json_read_* and json_write_* */
 typedef enum _json_state
 {
     json_state_ok,
@@ -93,6 +124,7 @@ typedef enum _json_state
     json_state_stream_error
 } json_state;
 
+/* json value types */
 typedef enum _json_type
 {
     json_type_null,
@@ -132,29 +164,21 @@ typedef struct _json_array
     size_t count;
 } json_array;
 
-typedef struct _json_input_stream
-{
-    size_t (*read)(void *data, size_t size, size_t count, void *args);
-    void *args;
-} json_input_stream;
+/* Parsing a json type from an input stream */
+json_state json_read_string(json_allocator allocator, json_input_stream input, json_string *data_out);
+json_state json_read_integer(json_allocator allocator, json_input_stream input, json_integer *data_out);
+json_state json_read_decimal(json_allocator allocator, json_input_stream input, json_decimal *data_out);
+json_state json_read_object(json_allocator allocator, json_input_stream input, json_object *data_out);
+json_state json_read_array(json_allocator allocator, json_input_stream input, json_array *data_out);
 
+/* Writing a json type to an output stream */
+json_state json_write_string(json_style *style, json_output_stream output, json_string data_in);
+json_state json_write_integer(json_style *style, json_output_stream output, json_integer data_in);
+json_state json_write_decimal(json_style *style, json_output_stream output, json_decimal data_in);
+json_state json_write_object(json_style *style, json_output_stream output, json_object data_in);
+json_state json_write_array(json_style *style, json_output_stream output, json_array data_in);
 
-typedef struct _json_output_stream
-{
-    size_t (*write)(void *data, size_t size, size_t count, void *args);
-    void *args;
-} json_output_stream;
-
-json_state json_read_string(json_input_stream input, json_string *data_out);
-json_state json_read_integer(json_input_stream input, json_integer *data_out);
-json_state json_read_decimal(json_input_stream input, json_decimal *data_out);
-json_state json_read_object(json_input_stream input, json_object *data_out);
-json_state json_read_array(json_input_stream input, json_array *data_out);
-
-json_state json_write_string(json_output_stream output, json_string data_in, json_style *style);
-json_state json_write_integer(json_output_stream output, json_integer data_in, json_style *style);
-json_state json_write_decimal(json_output_stream output, json_decimal data_in, json_style *style);
-json_state json_write_object(json_output_stream output, json_object data_in, json_style *style);
-json_state json_write_array(json_output_stream output, json_array data_in, json_style *style);
+/* Searching a json_object for a given key */
+json_key_value json_find_key(json_object object, json_string key);
 
 #endif /* JSON_H */
