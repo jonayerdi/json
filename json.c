@@ -94,7 +94,7 @@ size_t json_string_output_stream_write(void *data, size_t size, size_t count, vo
 }
 
 /* Parse 4-digit hex json_string */
-json_state json_parse_hex(json_input_stream input, json_char output[2])
+json_state json_parse_hex(json_reader *reader, json_char output[2])
 {
     json_char digits[4];
     char hex[4];

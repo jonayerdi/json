@@ -43,6 +43,14 @@
     { _J_S("\\u"), _J_S("\\\\u") }  \
 }
 
+/* Enum of supported charsets */
+typedef enum _json_charset
+{
+    json_utf8,
+    json_utf16,
+    json_utf32
+} json_charset;
+
 /* Definition of the json_char */
 typedef char json_char;
 
@@ -203,26 +211,42 @@ typedef struct _json_allocator
 
 #define JSON_STD_ALLOCATOR { .malloc = malloc, .free = free }
 
+/* json_reader */
+typedef struct _json_reader
+{
+    json_charset charset;
+    json_allocator allocator;
+    json_input_stream in;
+} json_reader;
+
+/* json_reader */
+typedef struct _json_writer
+{
+    json_charset charset;
+    json_style style;
+    json_output_stream out;
+} json_writer;
+
 /* Parsing a json type from an input stream */
-json_state json_read_string(json_allocator allocator, json_input_stream input, json_string *data_out);
-json_state json_read_integer(json_allocator allocator, json_input_stream input, json_integer *data_out);
-json_state json_read_decimal(json_allocator allocator, json_input_stream input, json_decimal *data_out);
-json_state json_read_object(json_allocator allocator, json_input_stream input, json_object *data_out);
-json_state json_read_array(json_allocator allocator, json_input_stream input, json_array *data_out);
+json_state json_read_string(json_reader *reader, json_string *data_out);
+json_state json_read_integer(json_reader *reader, json_integer *data_out);
+json_state json_read_decimal(json_reader *reader, json_decimal *data_out);
+json_state json_read_object(json_reader *reader, json_object *data_out);
+json_state json_read_array(json_reader *reader, json_array *data_out);
 
 /* Writing a json type to an output stream */
-json_state json_write_string(json_style *style, json_output_stream output, json_string data_in);
-json_state json_write_integer(json_style *style, json_output_stream output, json_integer data_in);
-json_state json_write_decimal(json_style *style, json_output_stream output, json_decimal data_in);
-json_state json_write_object(json_style *style, json_output_stream output, json_object data_in);
-json_state json_write_array(json_style *style, json_output_stream output, json_array data_in);
+json_state json_write_string(json_writer *writer, json_string data_in);
+json_state json_write_integer(json_writer *writer, json_integer data_in);
+json_state json_write_decimal(json_writer *writer, json_decimal data_in);
+json_state json_write_object(json_writer *writer, json_object data_in);
+json_state json_write_array(json_writer *writer, json_array data_in);
 
 /* Read and write functions for string streams */
 size_t json_string_input_stream_read(void *data, size_t size, size_t count, void *args);
 size_t json_string_output_stream_write(void *data, size_t size, size_t count, void *args);
 
 /* Parse 4-digit hex json_string */
-json_state json_parse_hex(json_input_stream input, json_char output[2]);
+json_state json_parse_hex(json_reader *reader, json_char output[2]);
 
 /* Searching a json_object for a given key */
 json_key_value json_find_key(json_object object, json_string key);
