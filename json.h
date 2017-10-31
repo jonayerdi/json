@@ -43,14 +43,6 @@
     { _J_S("\\u"), _J_S("\\\\u") }  \
 }
 
-/* Enum of supported charsets */
-typedef enum _json_charset
-{
-    json_utf8,
-    json_utf16,
-    json_utf32
-} json_charset;
-
 /* Definition of the json_char */
 typedef char json_char;
 
@@ -214,7 +206,6 @@ typedef struct _json_allocator
 /* json_reader */
 typedef struct _json_reader
 {
-    json_charset charset;
     json_allocator allocator;
     json_input_stream in;
 } json_reader;
@@ -222,7 +213,6 @@ typedef struct _json_reader
 /* json_reader */
 typedef struct _json_writer
 {
-    json_charset charset;
     json_style style;
     json_output_stream out;
 } json_writer;
