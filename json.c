@@ -94,26 +94,25 @@ size_t json_string_output_stream_write(void *data, size_t size, size_t count, vo
 }
 
 /* Parse 4-digit hex json_string */
-json_state json_parse_hex(json_reader *reader, json_char output[2])
+json_state json_parse_hex(json_char *input, size_t count, json_char *output)
 {
-    json_char digits[4];
-    char hex[4];
-    size_t read = json_stream_read(input, digits, 4, 1);
-    if(read < 1)
-        return json_state_stream_error;
-    for(char i = 0 ; i < 4 ; i++)
+    json_char tmp;
+    for(size_t i = 0 ; i < count ; i++)
     {
-        hex[i] = JSON_HEX_VALUE(digits[i]);
-        if(hex[i] == -1)
-            return json_state_parse_error;
+        tmp = JSON_HEX_VALUE(input[i]);
+        if(tmp == -1)
+            return json_state_error_parse;
+        if(i%2)
+            output[i/2] = tmp;
+        else
+            output[i/2] += tmp << 4;
     }
-    output[0] = (hex[0] << 4) + hex[1];
-    output[1] = (hex[2] << 4) + hex[3];
+    
     return json_state_ok;
 }
 
 /* Searching a json_object for a given key */
-json_key_value inline json_find_key(json_object object, json_string key)
+json_key_value json_object_find_key(json_object object, json_string key, int depth, int num);
 {
     for(size_t i = 0 ; i < object.count ; i++)
         if(json_string_compare(key, object.values[i].key) == 0)
