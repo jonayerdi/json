@@ -112,10 +112,15 @@ json_state json_parse_hex(json_char *input, size_t count, json_char *output)
 }
 
 /* Searching a json_object for a given key */
-json_key_value json_object_find_key(json_object object, json_string key, int depth, int num);
+json_key_value json_object_find_key(json_object object, json_string key, size_t num)
 {
     for(size_t i = 0 ; i < object.count ; i++)
         if(json_string_compare(key, object.values[i].key) == 0)
-            return object.values[i];
+        {
+            if(num > 0)
+                num--;
+            else
+                return object.values[i];
+        }
     return null_key_value;
 }

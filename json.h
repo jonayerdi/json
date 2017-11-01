@@ -95,7 +95,7 @@ typedef struct _json_object
 
 typedef struct _json_array
 {
-    void *values;
+    void **values;
     json_type *types;
     size_t count;
 } json_array;
@@ -204,6 +204,6 @@ json_state json_write_array(json_string json, size_t length, json_encoding encod
 json_state json_parse_hex(json_char *input, size_t count, json_char *output);
 
 /* Searching a json_object for a given key */
-json_key_value json_object_find_key(json_object object, json_string key, int depth, int num);
+json_key_value json_object_find_key(json_object object, json_string key, size_t num);
 
 #endif /* JSON_H */
