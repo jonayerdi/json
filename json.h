@@ -2,7 +2,8 @@
 #define JSON_H
 
 #include <stddef.h> /* size_t */
-#include <string.h> /* memcpy, strlen, strcmp */
+#include <stdint.h> /* uint32_t */
+#include <string.h> /* strlen, strcmp */
 
 /* Hex digits */
 #define _JSON_IF_IN_RANGE_ELSE(C, RF, RL, I, E) ((((C) >= (RF)) && ((C) <= (RL))) ? (I) : (E))
@@ -38,14 +39,6 @@
     { "\t", "\\t" }, \
     { "\\u", "\\\\u" }  \
 }
-
-/* ENcodings */
-typedef enum _json_encoding
-{
-    json_utf8,
-    json_utf16,
-    json_utf32
-} json_encoding;
 
 /* Definition of the json_char */
 typedef char json_char;
@@ -178,27 +171,21 @@ typedef struct _json_allocator
 
 #define JSON_STD_ALLOCATOR { .malloc = malloc, .free = free }
 
-/* Encoding */
-json_state json_utf8_to_utf16(json_string in, size_t max_read, json_string out, size_t max_write);
-json_state json_utf8_to_utf32(json_string in, size_t max_read, json_string out, size_t max_write);
-json_state json_utf16_to_utf8(json_string in, size_t max_read, json_string out, size_t max_write);
-json_state json_utf32_to_utf8(json_string in, size_t max_read, json_string out, size_t max_write);
-
 /* Parsing a json type from an unicode string */
-json_state json_read_string(json_string json, size_t length, json_encoding encoding, json_allocator allocator, json_string *data_out);
-json_state json_read_integer(json_string json, size_t length, json_encoding encoding, json_allocator allocator, json_integer *data_out);
-json_state json_read_decimal(json_string json, size_t length, json_encoding encoding, json_allocator allocator, json_decimal *data_out);
-json_state json_read_key_value(json_string json, size_t length, json_encoding encoding, json_allocator allocator, json_key_value *data_out);
-json_state json_read_object(json_string json, size_t length, json_encoding encoding, json_allocator allocator, json_object *data_out);
-json_state json_read_array(json_string json, size_t length, json_encoding encoding, json_allocator allocator, json_array *data_out);
+json_state json_read_string(json_string json, size_t length, json_allocator allocator, json_string *data_out);
+json_state json_read_integer(json_string json, size_t length, json_allocator allocator, json_integer *data_out);
+json_state json_read_decimal(json_string json, size_t length, json_allocator allocator, json_decimal *data_out);
+json_state json_read_key_value(json_string json, size_t length, json_allocator allocator, json_key_value *data_out);
+json_state json_read_object(json_string json, size_t length, json_allocator allocator, json_object *data_out);
+json_state json_read_array(json_string json, size_t length, json_allocator allocator, json_array *data_out);
 
 /* Writing a json type to an unicode string */
-json_state json_write_string(json_string json, size_t length, json_encoding encoding, json_style style, json_string data_in);
-json_state json_write_integer(json_string json, size_t length, json_encoding encoding, json_style style, json_integer data_in);
-json_state json_write_decimal(json_string json, size_t length, json_encoding encoding, json_style style, json_decimal data_in);
-json_state json_write_key_value(json_string json, size_t length, json_encoding encoding, json_style style, json_key_value data_in);
-json_state json_write_object(json_string json, size_t length, json_encoding encoding, json_style style, json_object data_in);
-json_state json_write_array(json_string json, size_t length, json_encoding encoding, json_style style, json_array data_in);
+json_state json_write_string(json_string json, size_t length, json_style style, json_string data_in);
+json_state json_write_integer(json_string json, size_t length, json_style style, json_integer data_in);
+json_state json_write_decimal(json_string json, size_t length, json_style style, json_decimal data_in);
+json_state json_write_key_value(json_string json, size_t length, json_style style, json_key_value data_in);
+json_state json_write_object(json_string json, size_t length, json_style style, json_object data_in);
+json_state json_write_array(json_string json, size_t length, json_style style, json_array data_in);
 
 /* Parse 4-digit hex json_string */
 json_state json_parse_hex(json_char *input, size_t count, json_char *output);
