@@ -1,8 +1,6 @@
 #ifndef JSON__TEST_H
 #define JSON__TEST_H
 
-#include <stdio.h>
-
 #include "json.h"
 
 #define test_assert(expression) \
@@ -24,5 +22,6 @@ void free_test(void *ptr);
 
 /* Tests */
 int JSON_HEX_VALUE_test(void);
+int json_parse_hex_test(void);
 
 #endif /* JSON__TEST_H */

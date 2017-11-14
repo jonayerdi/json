@@ -6,16 +6,16 @@ static json_key_value null_key_value = { .key = NULL, .value = NULL, .type = jso
 /* Parse 4-digit hex json_string */
 json_state json_parse_hex(json_char *input, size_t count, json_char *output)
 {
-    json_char tmp;
+    json_char digit;
     for(size_t i = 0 ; i < count ; i++)
     {
-        tmp = JSON_HEX_VALUE(input[i]);
-        if(tmp == -1)
+        digit = JSON_HEX_VALUE(input[i]);
+        if(digit == -1)
             return json_state_error_parse;
-        if(i%2)
-            output[i/2] = tmp;
+        if(i%2 == 0)
+            output[i/2] = digit << 4;
         else
-            output[i/2] += tmp << 4;
+            output[i/2] += digit;
     }
     
     return json_state_ok;
