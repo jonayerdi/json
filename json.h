@@ -2,8 +2,8 @@
 #define JSON_H
 
 #include <stddef.h> /* size_t */
-#include <stdint.h> /* uint32_t */
-#include <string.h> /* strlen, strcmp, memcpy */
+#include <stdio.h> /* sprintf */
+#include <string.h> /* strlen, strcmp, memcpy, memchr  */
 
 /* Hex digits */
 #define _JSON_IF_IN_RANGE_ELSE(C, RF, RL, I, E) ((((C) >= (RF)) && ((C) <= (RL))) ? (I) : (E))
@@ -14,7 +14,8 @@
 /* json_string compare */
 #define json_string_compare(str1, str2) strcmp(str1, str2)
 /* json_string copy */
-#define json_string_copy(src, dst) memcpy(dst, src, json_string_length(src))
+#define json_string_copy2(src, dst, len) memcpy(dst, src, len * sizeof(json_char))
+#define json_string_copy(src, dst) json_string_copy2(dst, src, json_string_length(src))
 
 /* Special json characters or strings */
 #define JSON_IGNORE " \t\r\n"
@@ -30,17 +31,6 @@
 #define JSON_ARRAY_OPEN "["
 #define JSON_ARRAY_SEPARATOR ","
 #define JSON_ARRAY_CLOSE "]"
-#define JSON_STRING_SPECIAL \
-{ \
-    { "\"", "\\\"" }, \
-    { "\\", "\\\\" }, \
-    { "\/", "\\/" }, \
-    { "\b", "\\b" }, \
-    { "\f", "\\f" }, \
-    { "\n", "\\n" }, \
-    { "\t", "\\t" }, \
-    { "\\u", "\\\\u" }  \
-}
 
 /* Definition of the json_char */
 typedef char json_char;
@@ -188,7 +178,7 @@ json_state json_read_array(json_string json, size_t length, json_allocator *allo
 
 /* Writing a json type to an unicode string */
 json_state json_write_value(json_string json, size_t length, json_style *style, json_value *data_in, size_t *written);
-json_state json_write_string(json_string json, size_t length, json_style *style, json_string *data_in, size_t *written);
+json_state json_write_string(json_string json, size_t length, json_style *style, json_string data_in, size_t *written);
 json_state json_write_integer(json_string json, size_t length, json_style *style, json_integer *data_in, size_t *written);
 json_state json_write_decimal(json_string json, size_t length, json_style *style, json_decimal *data_in, size_t *written);
 json_state json_write_key_value(json_string json, size_t length, json_style *style, json_key_value *data_in, size_t *written);

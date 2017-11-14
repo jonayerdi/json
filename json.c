@@ -1,13 +1,16 @@
 #include "json.h"
 
-#define json_output_string(src) \
+#define json_output_string2(src, len) \
 { \
-    size_t _src_length = json_string_length(src); \
-    if(_src_length > (length - index)) \
+    if(len > (length - index)) \
             return json_state_error_buffer; \
-    json_string_copy(src, ((json) + (index))); \
-    index += _src_length; \
+    json_string_copy2(src, ((json) + (index)), len); \
+    index += len; \
 }
+
+#define json_output_string(src) json_output_string2(src, json_string_length(src))
+
+#define json_string_contains(str, ch) (memchr((str), ((int)ch), json_string_length(str)) == NULL)
 
 json_state json_write_value(json_string json, size_t length, json_style *style, json_value *data_in, size_t *written)
 {
@@ -62,21 +65,107 @@ json_state json_write_value(json_string json, size_t length, json_style *style, 
 
     return json_state_ok;
 }
-json_state json_write_string(json_string json, size_t length, json_style *style, json_string *data_in, size_t *written)
+json_state json_write_string(json_string json, size_t length, json_style *style, json_string data_in, size_t *written)
 {
+    size_t index = 0;
+    json_string str = *data_in;
+    size_t strlength = json_string_length(str);
 
+    json_output_string(style->_string_open);
+
+    for(size_t i = 0 ; i < strlength ; i++)
+    {
+        switch(str[i])
+        {
+            case '\"':
+                json_output_string("\\\"");
+                break;
+            case '\\':
+                json_output_string("\\\\");
+                break;
+            case '/':
+                json_output_string("\\/");
+                break;
+            case '\b':
+                json_output_string("\\b");
+                break;
+            case '\f':
+                json_output_string("\\f");
+                break;
+            case '\n':
+                json_output_string("\\n");
+                break;
+            case '\r':
+                json_output_string("\\r");
+                break;
+            case '\t':
+                json_output_string("\\t");
+                break;
+            default:
+                json_output_string2(str + i, 1);
+                break;
+        }
+    }
+
+    json_output_string(style->_string_close);
+
+    *written = index;
+
+    return json_state_ok;
 }
 json_state json_write_integer(json_string json, size_t length, json_style *style, json_integer *data_in, size_t *written)
 {
+    size_t index = 0;
+    int size;
+    char result[22];
 
+    size = sprintf(json, "%lls", result);
+    if(size > 21)
+        return json_state_error_buffer;
+    
+    json_output_string(result);
+
+    *written = index;
+
+    return json_state_ok;    
 }
 json_state json_write_decimal(json_string json, size_t length, json_style *style, json_decimal *data_in, size_t *written)
 {
+    size_t index = 0;
+    int size;
+    char result[256];
 
+    size = sprintf(json, "%.200lf", result);
+    if(size > 255)
+        return json_state_error_buffer;
+    
+    json_output_string(result);
+
+    *written = index;
+
+    return json_state_ok; 
 }
 json_state json_write_key_value(json_string json, size_t length, json_style *style, json_key_value *data_in, size_t *written)
 {
+    size_t index = 0;
+    size_t sub_written;
+    json_state sub_retval;
 
+    sub_retval = json_write_string(json + index, length - index, style, &data_in->key, &sub_written);
+    if(sub_retval != json_state_ok)
+        return sub_retval;
+    index += sub_written;
+
+    json_output_string(style->_object_key_value_separator);
+
+    sub_retval = json_write_value(json + index, length - index, style, &data_in->value, &sub_written);
+    if(sub_retval != json_state_ok)
+        return sub_retval;
+    index += sub_written;
+
+    *written = index;
+
+    return json_state_ok;
 }
 json_state json_write_object(json_string json, size_t length, json_style *style, json_object *data_in, size_t *written)
 {
@@ -91,6 +180,7 @@ json_state json_write_object(json_string json, size_t length, json_style *style,
         sub_retval = json_write_key_value(json + index, length - index, style, &data_in->values[i], &sub_written);
         if(sub_retval != json_state_ok)
             return sub_retval;
+        index += sub_written;
 
         if(i < data_in->count - 1)
             json_output_string(style->_object_pair_separator);
@@ -115,6 +205,7 @@ json_state json_write_array(json_string json, size_t length, json_style *style, 
         sub_retval = json_write_value(json + index, length - index, style, &data_in->values[i], &sub_written);
         if(sub_retval != json_state_ok)
             return sub_retval;
+        index += sub_written;
 
         if(i < data_in->count - 1)
             json_output_string(style->_array_separator);
