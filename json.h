@@ -35,14 +35,15 @@
 /* Definition of the json_char */
 typedef char json_char;
 
-/* Return type for json_read_* and json_write_* */
+/* Return type for json_* */
 typedef enum _json_state
 {
     json_state_ok =                 0,
     json_state_error_malloc =       1<<0,
     json_state_error_buffer =       1<<1,
     json_state_error_parse =        1<<2,
-    json_state_error_encoding =     1<<3
+    json_state_error_encoding =     1<<3,
+    json_state_error_type =     1<<4
 } json_state;
 
 /* json value types */
@@ -134,7 +135,7 @@ typedef struct _json_style
     ._string_open = JSON_STRING_OPEN, \
     ._string_close = JSON_STRING_CLOSE, \
     ._object_open = "{\n", \
-    ._object_key_value_separator = " : ", \
+    ._object_key_value_separator = ": ", \
     ._object_pair_separator = ",\n", \
     ._object_close = "\n}", \
     ._array_open = "[\n", \
@@ -151,7 +152,7 @@ typedef struct _json_style
     ._string_open = JSON_STRING_OPEN, \
     ._string_close = JSON_STRING_CLOSE, \
     ._object_open = "{\n", \
-    ._object_key_value_separator = " : ", \
+    ._object_key_value_separator = ": ", \
     ._object_pair_separator = ",\n", \
     ._object_close = "\n}", \
     ._array_open = "[\n", \
@@ -159,31 +160,41 @@ typedef struct _json_style
     ._array_close = "\n]" \
 }
 
+static json_style json_style_compact = JSON_STYLE_COMPACT;
+static json_style json_style_tabs = JSON_STYLE_TABS;
+static json_style json_style_4spaces = JSON_STYLE_4SPACES;
+
 /* Memory allocator for json_read_* */
 typedef struct _json_allocator
 {
     void *(*malloc)(size_t size);
-    void (*free)(void);
+    void (*free)(void *ptr);
 } json_allocator;
 
 #define JSON_STD_ALLOCATOR { .malloc = malloc, .free = free }
 
+/* Freeing json values */
+void json_free_value(json_allocator *allocator, json_value value);
+void json_free_object(json_allocator *allocator, json_object value);
+void json_free_array(json_allocator *allocator, json_array value);
+
 /* Parsing a json type from an unicode string */
-json_state json_read_string(json_string json, size_t length, json_allocator *allocator, json_string *data_out);
-json_state json_read_integer(json_string json, size_t length, json_allocator *allocator, json_integer *data_out);
-json_state json_read_decimal(json_string json, size_t length, json_allocator *allocator, json_decimal *data_out);
-json_state json_read_key_value(json_string json, size_t length, json_allocator *allocator, json_key_value *data_out);
-json_state json_read_object(json_string json, size_t length, json_allocator *allocator, json_object *data_out);
-json_state json_read_array(json_string json, size_t length, json_allocator *allocator, json_array *data_out);
+json_state json_read_value(json_string json, size_t length, json_allocator *allocator, json_value *data_out, size_t *read);
+json_state json_read_string(json_string json, size_t length, json_allocator *allocator, json_string *data_out, size_t *read);
+json_state json_read_integer(json_string json, size_t length, json_allocator *allocator, json_integer *data_out, size_t *read);
+json_state json_read_decimal(json_string json, size_t length, json_allocator *allocator, json_decimal *data_out, size_t *read);
+json_state json_read_key_value(json_string json, size_t length, json_allocator *allocator, json_key_value *data_out, size_t *read);
+json_state json_read_object(json_string json, size_t length, json_allocator *allocator, json_object *data_out, size_t *read);
+json_state json_read_array(json_string json, size_t length, json_allocator *allocator, json_array *data_out, size_t *read);
 
 /* Writing a json type to an unicode string */
-json_state json_write_value(json_string json, size_t length, json_style *style, json_value *data_in, size_t *written);
-json_state json_write_string(json_string json, size_t length, json_style *style, json_string data_in, size_t *written);
-json_state json_write_integer(json_string json, size_t length, json_style *style, json_integer *data_in, size_t *written);
-json_state json_write_decimal(json_string json, size_t length, json_style *style, json_decimal *data_in, size_t *written);
-json_state json_write_key_value(json_string json, size_t length, json_style *style, json_key_value *data_in, size_t *written);
-json_state json_write_object(json_string json, size_t length, json_style *style, json_object *data_in, size_t *written);
-json_state json_write_array(json_string json, size_t length, json_style *style, json_array *data_in, size_t *written);
+json_state json_write_value(json_string json, size_t length, json_integer indent, json_style *style, json_value *data_in, size_t *written);
+json_state json_write_string(json_string json, size_t length, json_integer indent, json_style *style, json_string data_in, size_t *written);
+json_state json_write_integer(json_string json, size_t length, json_integer indent, json_style *style, json_integer *data_in, size_t *written);
+json_state json_write_decimal(json_string json, size_t length, json_integer indent, json_style *style, json_decimal *data_in, size_t *written);
+json_state json_write_key_value(json_string json, size_t length, json_integer indent, json_style *style, json_key_value *data_in, size_t *written);
+json_state json_write_object(json_string json, size_t length, json_integer indent, json_style *style, json_object *data_in, size_t *written);
+json_state json_write_array(json_string json, size_t length, json_integer indent, json_style *style, json_array *data_in, size_t *written);
 
 /* Parse 4-digit hex json_string */
 json_state json_parse_hex(json_char *input, size_t count, json_char *output);

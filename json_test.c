@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
 {
     JSON_HEX_VALUE_test();
 	json_parse_hex_test();
+	json_write_test1();
 	test_assert(memory_allocations_count == 0); /* Check for memory leaks */
 }
 
@@ -90,6 +91,33 @@ int json_parse_hex_test(void)
 	}
 	/* Check invalid results */
 
+	return 0;
+}
+int json_write_test1(void)
+{
+	json_state retval;
+	json_char result[100];
+	size_t written;
+	json_allocator allocator = { .malloc = malloc_test, .free = free_test };
+	json_object *root = (json_object *)malloc_test(sizeof(json_object));
+	root->count = 2;
+	json_key_value *rootValues = (json_key_value *)malloc_test(sizeof(json_key_value) * 2);
+	root->values = rootValues;
+	rootValues[0].key = (json_char *)malloc_test(sizeof(json_char) * 5);
+	memcpy(rootValues[0].key, "key0", 5);
+	rootValues[0].value.type = json_type_true;
+	rootValues[1].key = (json_char *)malloc_test(sizeof(json_char) * 5);
+	memcpy(rootValues[1].key, "key1", 5);
+	rootValues[1].value.type = json_type_integer;
+	rootValues[1].value.value = (json_integer *)malloc_test(sizeof(json_integer));
+	*((json_integer *)rootValues[1].value.value) = 5;
+	retval = json_write_object(result, 100, 0, &json_style_4spaces, root, &written);
+	test_assert(retval == json_state_ok);
+	result[written] = '\0';
+	json_free_object(&allocator, *root);
+	free_test(root);
+	printf("%s", result);
+	test_assert(memory_allocations_count == 0); /* Check for memory leaks */
 	return 0;
 }
 /******************************************************************** TESTS **************************************************************************/
