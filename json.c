@@ -54,6 +54,174 @@ inline void json_free_array(json_allocator *allocator, json_array array)
     allocator->free(array.values);
 }
 
+inline int json_can_ignore(json_char character);
+inline int json_can_ignore(json_char character)
+{
+    for(size_t i = 0 ; i < json_string_length(JSON_IGNORE) ; i++)
+        if(character == JSON_IGNORE[i])
+            return 1;
+    return 0;
+}
+inline json_state json_expect(json_string json, size_t length, json_string pattern, size_t *read);
+inline json_state json_expect(json_string json, size_t length, json_string pattern, size_t *read)
+{
+    size_t index = 0;
+    size_t pattern_index;
+    size_t pattern_length = json_string_length(pattern);
+    while(json_can_ignore(json[index]) && index < length)
+        index++;
+    if((length - index) >= pattern_length)
+    {
+        for(pattern_index = 0 ; pattern_index < pattern_length ; pattern_index++)
+            if(json[index++] != pattern[pattern_index])
+                return json_state_error_parse;
+        *read = index;
+        return json_state_ok;
+    }
+    return json_state_error_buffer;
+}
+json_state json_read_value(json_string json, size_t length, json_allocator *allocator, json_value *data_out, size_t *read)
+{
+
+    return json_state_ok;
+}
+json_state json_read_string(json_string json, size_t length, json_allocator *allocator, json_string *data_out, size_t *read)
+{
+    size_t index = 0;
+    size_t out_index = 0;
+    json_state sub_retval;
+    size_t sub_read;
+    json_string buffer, buffer2;
+    char escaped = 0;
+
+    sub_retval = json_expect(json + index, length - index, JSON_STRING_OPEN, &sub_read);
+    if(sub_retval != json_state_ok)
+        return sub_retval;
+    index += sub_read;
+
+    buffer = (json_string)allocator->malloc(sizeof(json_char));
+
+    while(index < length)
+    {
+        if(out_index % 20 == 0)
+        {
+            buffer2 = (json_string)allocator->malloc(sizeof(json_char) * (out_index + 20));
+            memcpy(buffer2, buffer, out_index);
+            allocator->free(buffer);
+            buffer = buffer2;
+        }
+        if(escaped)
+        {
+            escaped = 0;
+            switch(json[index])
+            {
+                case '\"':
+                    buffer[out_index++] = '\"';
+                    break;
+                case '\\':
+                    buffer[out_index++] = '\\';
+                    break;
+                case '/':
+                    buffer[out_index++] = '/';
+                    break;
+                case 'b':
+                    buffer[out_index++] = '\b';
+                    break;
+                case 'f':
+                    buffer[out_index++] = '\f';
+                    break;
+                case 'n':
+                    buffer[out_index++] = '\n';
+                    break;
+                case 'r':
+                    buffer[out_index++] = '\r';
+                    break;
+                case 't':
+                    buffer[out_index++] = '\t';
+                    break;
+                case 'u':
+                    //TODO
+                    break;
+                default:
+                    allocator->free(buffer);
+                    return json_state_error_parse;
+            }
+        }
+        else
+        {
+            switch(json[index])
+            {
+                case '\"':
+                    buffer[out_index++] = '\0';
+                    buffer2 = (json_string)allocator->malloc(sizeof(json_char) * (out_index + 20));
+                    memcpy(buffer2, buffer, out_index);
+                    allocator->free(buffer);
+                    *data_out = buffer2;
+                    *read = index;
+                    return json_state_ok;
+                case '\\':
+                    escaped = 1;
+                    break;
+                default:
+                    buffer[out_index++] = json[index];
+                    break;
+            }
+        }
+        index++;
+    }
+
+    return json_state_error_buffer;
+}
+json_state json_read_integer(json_string json, size_t length, json_allocator *allocator, json_integer *data_out, size_t *read)
+{
+    
+    return json_state_error_buffer;
+}
+json_state json_read_decimal(json_string json, size_t length, json_allocator *allocator, json_decimal *data_out, size_t *read)
+{
+
+    return json_state_error_buffer;
+}
+json_state json_read_key_value(json_string json, size_t length, json_allocator *allocator, json_key_value *data_out, size_t *read)
+{
+    size_t index = 0;
+    size_t sub_read;
+    json_state sub_retval;
+
+    sub_retval = json_read_string(json + index, length - index, allocator, &data_out->key, &sub_read);
+    if(sub_retval != json_state_ok)
+        return sub_retval;
+    index += sub_read;
+
+    sub_retval = json_expect(json + index, length - index, JSON_OBJECT_KEY_VALUE_SEPARATOR, &sub_read);
+    if(sub_retval != json_state_ok)
+    {
+        allocator->free(data_out->key);
+        return sub_retval;
+    }
+    index += sub_read;
+
+    sub_retval = json_read_value(json + index, length - index, allocator, &data_out->value, &sub_read);
+    if(sub_retval != json_state_ok)
+    {
+        allocator->free(data_out->key);
+        return sub_retval;
+    }
+    index += sub_read;
+
+    return json_state_ok;
+}
+json_state json_read_object(json_string json, size_t length, json_allocator *allocator, json_object *data_out, size_t *read)
+{
+    
+    return json_state_ok;
+}
+json_state json_read_array(json_string json, size_t length, json_allocator *allocator, json_array *data_out, size_t *read)
+{
+    
+    return json_state_ok;
+}
+
 json_state json_write_value(json_string json, size_t length, json_integer indent, json_style *style, json_value *data_in, size_t *written)
 {
     size_t index = 0;

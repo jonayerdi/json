@@ -43,7 +43,7 @@ typedef enum _json_state
     json_state_error_buffer =       1<<1,
     json_state_error_parse =        1<<2,
     json_state_error_encoding =     1<<3,
-    json_state_error_type =     1<<4
+    json_state_error_type =         1<<4
 } json_state;
 
 /* json value types */
