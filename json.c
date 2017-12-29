@@ -256,11 +256,11 @@ json_state json_read_integer(json_string json, size_t length, json_allocator *al
 
     while(index < length)
     {
-        digit = JSON_DECIMAL_VALUE(json[index++]);
+        digit = JSON_DECIMAL_VALUE(json[index]);
         if(digit < 0)
             break;
-        else
-            result = (result * 10) + digit;
+        result = (result * 10) + digit;
+        index++;
     }
 
     *data_out = result;
