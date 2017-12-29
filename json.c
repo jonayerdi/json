@@ -89,26 +89,26 @@ json_state json_read_value(json_string json, size_t length, json_allocator *allo
     
     switch(next_token)
     {
-        case JSON_NULL[0]:
+        case 'n':
             data_out->type = json_type_null;
             *read = index + json_string_length(JSON_NULL);
             break;
-        case JSON_TRUE[0]:
+        case 't':
             data_out->type = json_type_true;
             *read = index + json_string_length(JSON_TRUE);
             break;
-        case JSON_FALSE[0]:
+        case 'f':
         data_out->type = json_type_false;
             *read = index + json_string_length(JSON_FALSE);
             break;
-        case JSON_STRING_OPEN[0]:
+        case '\"':
             data_out->type = json_type_string;
             sub_retval = json_read_string(json + index, length - index, allocator, (json_string *)&data_out->value, &sub_read);
             if(sub_retval != json_state_ok)
                 return sub_retval;
             *read = index + sub_read;
             break;
-        case JSON_OBJECT_OPEN[0]:
+        case '{':
             data_out->type = json_type_object;
             data_out->value = allocator->malloc(sizeof(json_object));
             sub_retval = json_read_object(json + index, length - index, allocator, (json_object *)data_out->value, &sub_read);
@@ -119,7 +119,7 @@ json_state json_read_value(json_string json, size_t length, json_allocator *allo
             }
             *read = index + sub_read;
             break;
-        case JSON_ARRAY_OPEN[0]:
+        case '[':
             data_out->type = json_type_array;
             data_out->value = allocator->malloc(sizeof(json_array));
             sub_retval = json_read_array(json + index, length - index, allocator, (json_array *)data_out->value, &sub_read);
@@ -163,7 +163,6 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
 {
     size_t index = 0;
     size_t out_index = 0;
-    json_state sub_retval;
     size_t sub_read;
     json_string buffer, buffer2;
     char escaped = 0;
@@ -272,7 +271,7 @@ json_state json_read_integer(json_string json, size_t length, json_allocator *al
 json_state json_read_decimal(json_string json, size_t length, json_allocator *allocator, json_decimal *data_out, size_t *read)
 {
     size_t index = 0;
-    char decimals = 0;
+    size_t decimals = 0;
     int digit;
     json_decimal result = 0.0;
 
@@ -295,7 +294,7 @@ json_state json_read_decimal(json_string json, size_t length, json_allocator *al
     }
 
     for(size_t i = 0 ; i < (decimals - 1) ; i++)
-        result /= 10;
+        result /= 10.0;
     *data_out = result;
     *read = index;
 
@@ -337,7 +336,7 @@ json_state json_read_object(json_string json, size_t length, json_allocator *all
     size_t sub_read;
     json_state sub_retval;
     json_char next_token;
-    json_key_value *buffer, *buffer2;
+    json_key_value *buffer, *buffer2 = NULL;
     size_t element_count = 0;
 
     if(json_next_token(json + index, length - index, &sub_read) != JSON_OBJECT_OPEN[0])
@@ -351,7 +350,7 @@ json_state json_read_object(json_string json, size_t length, json_allocator *all
         sub_retval = json_read_key_value(json + index, length - index, allocator, buffer + element_count, &sub_read);
         if(sub_retval != json_state_ok)
         {
-            for(int i = 0 ; i < element_count ; i++)
+            for(size_t i = 0 ; i < element_count ; i++)
             {
                 allocator->free(buffer[i].key);
                 json_free_value(allocator, buffer[i].value);
@@ -372,7 +371,7 @@ json_state json_read_object(json_string json, size_t length, json_allocator *all
         }
         else if(next_token != JSON_OBJECT_CLOSE[0])
         {
-            for(int i = 0 ; i < element_count ; i++)
+            for(size_t i = 0 ; i < element_count ; i++)
             {
                 allocator->free(buffer[i].key);
                 json_free_value(allocator, buffer[i].value);
@@ -395,7 +394,7 @@ json_state json_read_array(json_string json, size_t length, json_allocator *allo
     size_t sub_read;
     json_state sub_retval;
     json_char next_token;
-    json_value *buffer, *buffer2;
+    json_value *buffer, *buffer2 = NULL;
     size_t element_count = 0;
 
     if(json_next_token(json + index, length - index, &sub_read) != JSON_ARRAY_OPEN[0])
@@ -409,7 +408,7 @@ json_state json_read_array(json_string json, size_t length, json_allocator *allo
         sub_retval = json_read_value(json + index, length - index, allocator, buffer + element_count, &sub_read);
         if(sub_retval != json_state_ok)
         {
-            for(int i = 0 ; i < element_count ; i++)
+            for(size_t i = 0 ; i < element_count ; i++)
                 json_free_value(allocator, buffer[i]);
             allocator->free(buffer);
             return sub_retval;
@@ -427,7 +426,7 @@ json_state json_read_array(json_string json, size_t length, json_allocator *allo
         }
         else if(next_token != JSON_ARRAY_CLOSE[0])
         {
-            for(int i = 0 ; i < element_count ; i++)
+            for(size_t i = 0 ; i < element_count ; i++)
                 json_free_value(allocator, buffer[i]);
             allocator->free(buffer);
             return json_state_error_parse;

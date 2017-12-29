@@ -24,5 +24,6 @@ void free_test(void *ptr);
 int JSON_HEX_VALUE_test(void);
 int json_parse_hex_test(void);
 int json_write_test1(void);
+int json_read_test1(void);
 
 #endif /* JSON__TEST_H */

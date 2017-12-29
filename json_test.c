@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
     JSON_HEX_VALUE_test();
 	json_parse_hex_test();
 	json_write_test1();
+	json_read_test1();
 	test_assert(memory_allocations_count == 0); /* Check for memory leaks */
 }
 
@@ -117,6 +118,21 @@ int json_write_test1(void)
 	json_free_object(&allocator, *root);
 	free_test(root);
 	printf("%s", result);
+	test_assert(memory_allocations_count == 0); /* Check for memory leaks */
+	return 0;
+}
+int json_read_test1(void)
+{
+	json_allocator allocator = { .malloc = malloc_test, .free = free_test };
+	json_object root;
+	json_char buffer[4096];
+	size_t read;
+	json_state retval;
+	FILE *file = fopen("test.json", "rb");
+	test_assert(file != NULL);
+	retval = json_read_object(buffer, fread(buffer, 1, 4096, file), &allocator, &root, &read);
+	test_assert(retval == json_state_ok);
+	json_free_object(&allocator, root);
 	test_assert(memory_allocations_count == 0); /* Check for memory leaks */
 	return 0;
 }
