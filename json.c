@@ -230,7 +230,7 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
                     memcpy(buffer2, buffer, out_index);
                     allocator->free(buffer);
                     *data_out = buffer2;
-                    *read = index;
+                    *read = index + 1;
                     return json_state_ok;
                 case '\\':
                     escaped = 1;
@@ -365,7 +365,8 @@ json_state json_read_object(json_string json, size_t length, json_allocator *all
         if(next_token == JSON_OBJECT_PAIR_SEPARATOR[0])
         {
             index += sub_read;
-            memcpy(buffer2, buffer, element_count + 1);
+            buffer2 = (json_key_value *)allocator->malloc(sizeof(json_key_value) * (element_count + 1));
+            memcpy(buffer2, buffer, sizeof(json_key_value) * element_count);
             allocator->free(buffer);
             buffer = buffer2;
         }
@@ -420,7 +421,8 @@ json_state json_read_array(json_string json, size_t length, json_allocator *allo
         if(next_token == JSON_ARRAY_SEPARATOR[0])
         {
             index += sub_read;
-            memcpy(buffer2, buffer, element_count + 1);
+            buffer2 = (json_value *)allocator->malloc(sizeof(json_value) * (element_count + 1));
+            memcpy(buffer2, buffer, sizeof(json_value) * element_count);
             allocator->free(buffer);
             buffer = buffer2;
         }
