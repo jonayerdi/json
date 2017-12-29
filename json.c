@@ -62,27 +62,24 @@ inline int json_can_ignore(json_char character)
             return 1;
     return 0;
 }
-inline json_state json_expect(json_string json, size_t length, json_string pattern, size_t *read);
-inline json_state json_expect(json_string json, size_t length, json_string pattern, size_t *read)
+inline json_char json_next_token(json_string json, size_t length, size_t *read);
+inline json_char json_next_token(json_string json, size_t length, size_t *read)
 {
     size_t index = 0;
-    size_t pattern_index;
-    size_t pattern_length = json_string_length(pattern);
-    while(json_can_ignore(json[index]) && index < length)
-        index++;
-    if((length - index) >= pattern_length)
+    do
     {
-        for(pattern_index = 0 ; pattern_index < pattern_length ; pattern_index++)
-            if(json[index++] != pattern[pattern_index])
-                return json_state_error_parse;
-        *read = index;
-        return json_state_ok;
-    }
-    return json_state_error_buffer;
+        if(index == length)
+        {
+            *read = 0;
+            return 0;
+        }
+    } while(json_can_ignore(json[index++]));
+    *read = index;
+    return json[index];
 }
 json_state json_read_value(json_string json, size_t length, json_allocator *allocator, json_value *data_out, size_t *read)
 {
-
+    
     return json_state_ok;
 }
 json_state json_read_string(json_string json, size_t length, json_allocator *allocator, json_string *data_out, size_t *read)
@@ -94,9 +91,8 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
     json_string buffer, buffer2;
     char escaped = 0;
 
-    sub_retval = json_expect(json + index, length - index, JSON_STRING_OPEN, &sub_read);
-    if(sub_retval != json_state_ok)
-        return sub_retval;
+    if(json_next_token(json + index, length - index, &sub_read) != JSON_STRING_OPEN[0])
+        return json_state_error_parse;
     index += sub_read;
 
     buffer = (json_string)allocator->malloc(sizeof(json_char));
@@ -141,6 +137,7 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
                     break;
                 case 'u':
                     //TODO
+                    out_index++;
                     break;
                 default:
                     allocator->free(buffer);
@@ -162,6 +159,9 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
                 case '\\':
                     escaped = 1;
                     break;
+                case '\0':
+                    out_index++;
+                    break;
                 default:
                     buffer[out_index++] = json[index];
                     break;
@@ -174,13 +174,55 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
 }
 json_state json_read_integer(json_string json, size_t length, json_allocator *allocator, json_integer *data_out, size_t *read)
 {
-    
-    return json_state_error_buffer;
+    size_t index = 0;
+    int digit;
+    json_integer result = 0;
+
+    while(index < length)
+    {
+        digit = JSON_DECIMAL_VALUE(json[index++]);
+        if(digit < 0)
+            break;
+        else
+            result = (result * 10) + digit;
+    }
+
+    *data_out = result;
+    *read = index;
+
+    return json_state_ok;
 }
 json_state json_read_decimal(json_string json, size_t length, json_allocator *allocator, json_decimal *data_out, size_t *read)
 {
+    size_t index = 0;
+    char decimals = 0;
+    int digit;
+    json_decimal result = 0.0;
 
-    return json_state_error_buffer;
+    while(index < length)
+    {
+        digit = JSON_DECIMAL_VALUE(json[index++]);
+        if(digit < 0 && !decimals)
+        {
+            if(json[index-1] == JSON_DECIMAL_COMMA[0])
+                decimals = 1;
+            else
+                break;
+        }
+        else
+        {
+            result = (result * 10) + digit;
+            if(decimals)
+                decimals++;
+        }
+    }
+
+    for(size_t i = 0 ; i < (decimals - 1) ; i++)
+        result /= 10;
+    *data_out = result;
+    *read = index;
+
+    return json_state_ok;
 }
 json_state json_read_key_value(json_string json, size_t length, json_allocator *allocator, json_key_value *data_out, size_t *read)
 {
@@ -193,11 +235,10 @@ json_state json_read_key_value(json_string json, size_t length, json_allocator *
         return sub_retval;
     index += sub_read;
 
-    sub_retval = json_expect(json + index, length - index, JSON_OBJECT_KEY_VALUE_SEPARATOR, &sub_read);
-    if(sub_retval != json_state_ok)
+    if(json_next_token(json + index, length - index, &sub_read) != JSON_OBJECT_KEY_VALUE_SEPARATOR[0])
     {
         allocator->free(data_out->key);
-        return sub_retval;
+        return json_state_error_parse;
     }
     index += sub_read;
 
@@ -209,16 +250,104 @@ json_state json_read_key_value(json_string json, size_t length, json_allocator *
     }
     index += sub_read;
 
+    *read = index;
+
     return json_state_ok;
 }
 json_state json_read_object(json_string json, size_t length, json_allocator *allocator, json_object *data_out, size_t *read)
 {
-    
+    size_t index = 0;
+    size_t sub_read;
+    json_state sub_retval;
+    json_char next_token;
+    json_key_value *buffer, *buffer2;
+    size_t element_count = 0;
+
+    if(json_next_token(json + index, length - index, &sub_read) != JSON_OBJECT_OPEN[0])
+        return json_state_error_parse;
+    index += sub_read;
+
+    buffer = (json_key_value *)allocator->malloc(sizeof(json_key_value));
+
+    while(json_next_token(json + index, length - index, &sub_read) != JSON_OBJECT_CLOSE[0])
+    {  
+        sub_retval = json_read_key_value(json + index, length - index, allocator, buffer + element_count, &sub_read);
+        if(sub_retval != json_state_ok)
+        {
+            allocator->free(buffer);
+            return sub_retval;
+        }
+        index += sub_read;
+        element_count++;
+
+        next_token = json_next_token(json + index, length - index, &sub_read);
+        if(next_token == JSON_OBJECT_PAIR_SEPARATOR[0])
+        {
+            index += sub_read;
+            memcpy(buffer2, buffer, element_count + 1);
+            allocator->free(buffer);
+            buffer = buffer2;
+        }
+        else if(next_token != JSON_OBJECT_CLOSE[0])
+        {
+            allocator->free(buffer);
+            return json_state_error_parse;
+        }
+    }
+    index += sub_read;
+
+    data_out->count = element_count;
+    data_out->values = buffer;
+    *read = index;
+
     return json_state_ok;
 }
 json_state json_read_array(json_string json, size_t length, json_allocator *allocator, json_array *data_out, size_t *read)
 {
-    
+    size_t index = 0;
+    size_t sub_read;
+    json_state sub_retval;
+    json_char next_token;
+    json_value *buffer, *buffer2;
+    size_t element_count = 0;
+
+    if(json_next_token(json + index, length - index, &sub_read) != JSON_ARRAY_OPEN[0])
+        return json_state_error_parse;
+    index += sub_read;
+
+    buffer = (json_value *)allocator->malloc(sizeof(json_value));
+
+    while(json_next_token(json + index, length - index, &sub_read) != JSON_ARRAY_CLOSE[0])
+    {  
+        sub_retval = json_read_value(json + index, length - index, allocator, buffer + element_count, &sub_read);
+        if(sub_retval != json_state_ok)
+        {
+            allocator->free(buffer);
+            return sub_retval;
+        }
+        index += sub_read;
+        element_count++;
+
+        next_token = json_next_token(json + index, length - index, &sub_read);
+        if(next_token == JSON_ARRAY_SEPARATOR[0])
+        {
+            index += sub_read;
+            memcpy(buffer2, buffer, element_count + 1);
+            allocator->free(buffer);
+            buffer = buffer2;
+        }
+        else if(next_token != JSON_ARRAY_CLOSE[0])
+        {
+            allocator->free(buffer);
+            return json_state_error_parse;
+        }
+    }
+    index += sub_read;
+
+    data_out->count = element_count;
+    data_out->values = buffer;
+    *read = index;
+
     return json_state_ok;
 }
 

@@ -7,6 +7,7 @@
 
 /* Hex digits */
 #define _JSON_IF_IN_RANGE_ELSE(C, RF, RL, I, E) ((((C) >= (RF)) && ((C) <= (RL))) ? (I) : (E))
+#define JSON_DECIMAL_VALUE(CHAR) _JSON_IF_IN_RANGE_ELSE(CHAR, '0', '9', CHAR - '0', -1)
 #define JSON_HEX_VALUE(CHAR) _JSON_IF_IN_RANGE_ELSE(CHAR, '0', '9', CHAR - '0', _JSON_IF_IN_RANGE_ELSE(CHAR, 'A', 'F', CHAR - 'A' + 10, _JSON_IF_IN_RANGE_ELSE(CHAR, 'a', 'f', CHAR - 'a' + 10, -1)))
 
 /* json_string length */
@@ -24,6 +25,7 @@
 #define JSON_FALSE "false"
 #define JSON_STRING_OPEN "\""
 #define JSON_STRING_CLOSE "\""
+#define JSON_DECIMAL_COMMA "."
 #define JSON_OBJECT_OPEN "{"
 #define JSON_OBJECT_KEY_VALUE_SEPARATOR ":"
 #define JSON_OBJECT_PAIR_SEPARATOR ","
