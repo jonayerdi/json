@@ -202,6 +202,6 @@ json_state json_write_array(json_string json, size_t length, json_integer indent
 json_state json_parse_hex(json_char *input, size_t count, json_char *output);
 
 /* Searching a json_object for a given key */
-json_key_value json_object_find_key(json_object object, json_string key, size_t num);
+json_value json_object_find_key(json_object object, json_string key, size_t num);
 
 #endif /* JSON_H */

@@ -253,6 +253,17 @@ json_state json_read_integer(json_string json, size_t length, json_allocator *al
     size_t index = 0;
     int digit;
     json_integer result = 0;
+    char negative = 0;
+    size_t sub_read;
+
+    json_next_token(json + index, length - index, &sub_read);
+    index = sub_read - 1;
+
+    if(index < length && json[index] == '-')
+    {
+        negative = 1;
+        index++;
+    }
 
     while(index < length)
     {
@@ -263,7 +274,7 @@ json_state json_read_integer(json_string json, size_t length, json_allocator *al
         index++;
     }
 
-    *data_out = result;
+    *data_out = negative ? -result : result;
     *read = index;
 
     return json_state_ok;
@@ -274,13 +285,24 @@ json_state json_read_decimal(json_string json, size_t length, json_allocator *al
     size_t decimals = 0;
     int digit;
     json_decimal result = 0.0;
+    char negative = 0;
+    size_t sub_read;
+
+    json_next_token(json + index, length - index, &sub_read);
+    index = sub_read - 1;
+
+    if(index < length && json[index] == '-')
+    {
+        negative = 1;
+        index++;
+    }
 
     while(index < length)
     {
-        digit = JSON_DECIMAL_VALUE(json[index++]);
-        if(digit < 0 && !decimals)
+        digit = JSON_DECIMAL_VALUE(json[index]);
+        if(digit < 0)
         {
-            if(json[index-1] == JSON_DECIMAL_COMMA[0])
+            if(!decimals && json[index] == JSON_DECIMAL_COMMA[0])
                 decimals = 1;
             else
                 break;
@@ -291,11 +313,12 @@ json_state json_read_decimal(json_string json, size_t length, json_allocator *al
             if(decimals)
                 decimals++;
         }
+        index++;
     }
 
     for(size_t i = 0 ; i < (decimals - 1) ; i++)
         result /= 10.0;
-    *data_out = result;
+    *data_out = negative ? -result : result;
     *read = index;
 
     return json_state_ok;
@@ -668,9 +691,6 @@ json_state json_write_array(json_string json, size_t length, json_integer indent
     return json_state_ok;
 }
 
-/*  */
-static json_key_value null_key_value = { .key = NULL, .value = NULL };
-
 /* Parse 4-digit hex json_string */
 json_state json_parse_hex(json_char *input, size_t count, json_char *output)
 {
@@ -689,8 +709,11 @@ json_state json_parse_hex(json_char *input, size_t count, json_char *output)
     return json_state_ok;
 }
 
+/*  */
+static json_value null_value = { .value = NULL, .type = json_type_nothing };
+
 /* Searching a json_object for a given key */
-json_key_value json_object_find_key(json_object object, json_string key, size_t num)
+json_value json_object_find_key(json_object object, json_string key, size_t num)
 {
     for(size_t i = 0 ; i < object.count ; i++)
         if(json_string_compare(key, object.values[i].key) == 0)
@@ -698,7 +721,7 @@ json_key_value json_object_find_key(json_object object, json_string key, size_t 
             if(num > 0)
                 num--;
             else
-                return object.values[i];
+                return object.values[i].value;
         }
-    return null_key_value;
+    return null_value;
 }
