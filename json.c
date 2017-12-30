@@ -43,14 +43,12 @@ void json_free_value(json_allocator *allocator, json_value value)
     {
         //Container types
         case json_type_array:
-            json_array *array = (json_array *)value.value;
-            json_free_array(allocator, *array);
-            allocator->free(array);
+            json_free_array(allocator, *(json_array *)value.value);
+            allocator->free(value.value);
             break;
         case json_type_object:
-            json_object *object = (json_object *)value.value;
-            json_free_object(allocator, *object);
-            allocator->free(object);
+            json_free_object(allocator, *(json_object *)value.value);
+            allocator->free(value.value);
             break;
         //Simple types
         case json_type_string:
@@ -58,6 +56,8 @@ void json_free_value(json_allocator *allocator, json_value value)
         case json_type_decimal:
             allocator->free(value.value);
             break;
+        default:
+        	break;
     }
 }
 inline void json_free_object(json_allocator *allocator, json_object object)
@@ -75,8 +75,6 @@ inline void json_free_array(json_allocator *allocator, json_array array)
         json_free_value(allocator, array.values[i]);
     allocator->free(array.values);
 }
-
-inline int json_can_ignore(json_char character);
 inline int json_can_ignore(json_char character)
 {
     for(size_t i = 0 ; i < json_string_length(JSON_IGNORE) ; i++)
@@ -84,7 +82,6 @@ inline int json_can_ignore(json_char character)
             return 1;
     return 0;
 }
-inline json_char json_next_token(json_string json, size_t length, size_t *read);
 inline json_char json_next_token(json_string json, size_t length, size_t *read)
 {
     size_t index = 0;
@@ -108,7 +105,7 @@ json_state json_read_value(json_string json, size_t length, json_allocator *allo
 
     next_token = json_next_token(json + index, length - index, &sub_read);
     index = sub_read - 1;
-    
+
     switch(next_token)
     {
         case 'n':
@@ -277,7 +274,7 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
                     escaped = 1;
                     break;
                 case '\0':
-                    
+
                     break;
                 default:
                     buffer[out_index++] = json[index];
@@ -412,7 +409,7 @@ json_state json_read_object(json_string json, size_t length, json_allocator *all
         return json_state_error_malloc;
 
     while(json_next_token(json + index, length - index, &sub_read) != JSON_OBJECT_CLOSE[0])
-    {  
+    {
         sub_retval = json_read_key_value(json + index, length - index, allocator, buffer + element_count, &sub_read);
         if(sub_retval != json_state_ok)
         {
@@ -478,7 +475,7 @@ json_state json_read_array(json_string json, size_t length, json_allocator *allo
         return json_state_error_malloc;
 
     while(json_next_token(json + index, length - index, &sub_read) != JSON_ARRAY_CLOSE[0])
-    {  
+    {
         sub_retval = json_read_value(json + index, length - index, allocator, buffer + element_count, &sub_read);
         if(sub_retval != json_state_ok)
         {
@@ -643,7 +640,7 @@ json_state json_write_integer(json_string json, size_t length, json_integer inde
 
     *written = index;
 
-    return json_state_ok;    
+    return json_state_ok;
 }
 json_state json_write_decimal(json_string json, size_t length, json_integer indent, json_style *style, json_decimal *data_in, size_t *written)
 {
@@ -654,14 +651,14 @@ json_state json_write_decimal(json_string json, size_t length, json_integer inde
     size = sprintf(result, "%.200lf", *data_in);
     if(size > 255)
         return json_state_error_buffer;
-    
+
     json_indent(indent);
 
     json_output_string(result);
 
     *written = index;
 
-    return json_state_ok; 
+    return json_state_ok;
 }
 json_state json_write_key_value(json_string json, size_t length, json_integer indent, json_style *style, json_key_value *data_in, size_t *written)
 {
@@ -760,7 +757,7 @@ json_state json_parse_hex(json_char *input, size_t count, json_char *output)
         else
             output[i/2] += digit;
     }
-    
+
     return json_state_ok;
 }
 

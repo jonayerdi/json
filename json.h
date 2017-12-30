@@ -206,6 +206,10 @@ void json_free_value(json_allocator *allocator, json_value value);
 void json_free_object(json_allocator *allocator, json_object value);
 void json_free_array(json_allocator *allocator, json_array value);
 
+/* Parser stuff */
+int json_can_ignore(json_char character);
+json_char json_next_token(json_string json, size_t length, size_t *read);
+
 /* Parsing a json type from an unicode string */
 json_state json_read_value(json_string json, size_t length, json_allocator *allocator, json_value *data_out, size_t *read);
 json_state json_read_string(json_string json, size_t length, json_allocator *allocator, json_string *data_out, size_t *read);
