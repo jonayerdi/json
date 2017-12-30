@@ -188,10 +188,6 @@ typedef struct _json_style
     ._array_close = "\n]" \
 }
 
-static json_style json_style_compact = JSON_STYLE_COMPACT;
-static json_style json_style_tabs = JSON_STYLE_TABS;
-static json_style json_style_4spaces = JSON_STYLE_4SPACES;
-
 /* Memory allocator for json_read_* */
 typedef struct _json_allocator
 {

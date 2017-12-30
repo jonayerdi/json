@@ -568,6 +568,9 @@ json_state json_write_value(json_string json, size_t length, json_integer indent
                 return sub_retval;
             index += sub_written;
             break;
+        default:
+            //Nothing
+            break;
     }
 
     *written = index;

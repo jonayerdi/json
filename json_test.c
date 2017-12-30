@@ -100,6 +100,7 @@ int json_write_test1(void)
 	json_char result[100];
 	size_t written;
 	json_allocator allocator = { .malloc = malloc_test, .free = free_test };
+	json_style style = JSON_STYLE_4SPACES;
 	json_object *root = (json_object *)malloc_test(sizeof(json_object));
 	root->count = 2;
 	json_key_value *rootValues = (json_key_value *)malloc_test(sizeof(json_key_value) * 2);
@@ -112,7 +113,7 @@ int json_write_test1(void)
 	rootValues[1].value.type = json_type_integer;
 	rootValues[1].value.value = (json_integer *)malloc_test(sizeof(json_integer));
 	*((json_integer *)rootValues[1].value.value) = 5;
-	retval = json_write_object(result, 100, 0, &json_style_4spaces, root, &written);
+	retval = json_write_object(result, 100, 0, &style, root, &written);
 	test_assert(retval == json_state_ok);
 	result[written] = '\0';
 	json_free_object(&allocator, *root);
