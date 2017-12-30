@@ -133,6 +133,8 @@ json_state json_read_value(json_string json, size_t length, json_allocator *allo
         case '{':
             data_out->type = json_type_object;
             data_out->value = allocator->malloc(sizeof(json_object));
+            if(data_out->value == NULL)
+                return json_state_error_malloc;
             sub_retval = json_read_object(json + index, length - index, allocator, (json_object *)data_out->value, &sub_read);
             if(sub_retval != json_state_ok)
             {
@@ -144,6 +146,8 @@ json_state json_read_value(json_string json, size_t length, json_allocator *allo
         case '[':
             data_out->type = json_type_array;
             data_out->value = allocator->malloc(sizeof(json_array));
+            if(data_out->value == NULL)
+                return json_state_error_malloc;
             sub_retval = json_read_array(json + index, length - index, allocator, (json_array *)data_out->value, &sub_read);
             if(sub_retval != json_state_ok)
             {
@@ -155,6 +159,8 @@ json_state json_read_value(json_string json, size_t length, json_allocator *allo
         default:
             //Number
             data_out->value = allocator->malloc(sizeof(json_integer));
+            if(data_out->value == NULL)
+                return json_state_error_malloc;
             sub_retval = json_read_integer(json + index, length - index, allocator, (json_integer *)data_out->value, &sub_read);
             if(sub_retval != json_state_ok)
             {
@@ -166,6 +172,8 @@ json_state json_read_value(json_string json, size_t length, json_allocator *allo
                 data_out->type = json_type_decimal;
                 allocator->free(data_out->value);
                 data_out->value = allocator->malloc(sizeof(json_decimal));
+                if(data_out->value == NULL)
+                    return json_state_error_malloc;
                 sub_retval = json_read_decimal(json + index, length - index, allocator, (json_decimal *)data_out->value, &sub_read);
                 if(sub_retval != json_state_ok)
                 {
@@ -194,12 +202,19 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
     index += sub_read;
 
     buffer = (json_string)allocator->malloc(sizeof(json_char));
+    if(buffer == NULL)
+        return json_state_error_malloc;
 
     while(index < length)
     {
         if(out_index % 20 == 0)
         {
             buffer2 = (json_string)allocator->malloc(sizeof(json_char) * (out_index + 20));
+            if(buffer2 == NULL)
+            {
+                allocator->free(buffer);
+                return json_state_error_malloc;
+            }
             memcpy(buffer2, buffer, out_index);
             allocator->free(buffer);
             buffer = buffer2;
@@ -248,6 +263,11 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
                 case '\"':
                     buffer[out_index++] = '\0';
                     buffer2 = (json_string)allocator->malloc(sizeof(json_char) * (out_index + 20));
+                    if(buffer2 == NULL)
+                    {
+                        allocator->free(buffer);
+                        return json_state_error_malloc;
+                    }
                     memcpy(buffer2, buffer, out_index);
                     allocator->free(buffer);
                     *data_out = buffer2;
@@ -388,6 +408,8 @@ json_state json_read_object(json_string json, size_t length, json_allocator *all
     index += sub_read;
 
     buffer = (json_key_value *)allocator->malloc(sizeof(json_key_value));
+    if(buffer == NULL)
+        return json_state_error_malloc;
 
     while(json_next_token(json + index, length - index, &sub_read) != JSON_OBJECT_CLOSE[0])
     {  
@@ -410,6 +432,11 @@ json_state json_read_object(json_string json, size_t length, json_allocator *all
         {
             index += sub_read;
             buffer2 = (json_key_value *)allocator->malloc(sizeof(json_key_value) * (element_count + 1));
+            if(buffer2 == NULL)
+            {
+                allocator->free(buffer);
+                return json_state_error_malloc;
+            }
             memcpy(buffer2, buffer, sizeof(json_key_value) * element_count);
             allocator->free(buffer);
             buffer = buffer2;
@@ -447,6 +474,8 @@ json_state json_read_array(json_string json, size_t length, json_allocator *allo
     index += sub_read;
 
     buffer = (json_value *)allocator->malloc(sizeof(json_value));
+    if(buffer == NULL)
+        return json_state_error_malloc;
 
     while(json_next_token(json + index, length - index, &sub_read) != JSON_ARRAY_CLOSE[0])
     {  
@@ -466,6 +495,11 @@ json_state json_read_array(json_string json, size_t length, json_allocator *allo
         {
             index += sub_read;
             buffer2 = (json_value *)allocator->malloc(sizeof(json_value) * (element_count + 1));
+            if(buffer2 == NULL)
+            {
+                allocator->free(buffer);
+                return json_state_error_malloc;
+            }
             memcpy(buffer2, buffer, sizeof(json_value) * element_count);
             allocator->free(buffer);
             buffer = buffer2;
