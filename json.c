@@ -1,3 +1,25 @@
+/***********************************************************************************
+zlib License
+
+Copyright (c) 2017 Jon Ayerdi
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+***********************************************************************************/
+
 #include "json.h"
 
 #define json_output_string2(src, len) \
@@ -213,7 +235,6 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
                     break;
                 case 'u':
                     //TODO
-                    out_index++;
                     break;
                 default:
                     allocator->free(buffer);
@@ -236,7 +257,7 @@ json_state json_read_string(json_string json, size_t length, json_allocator *all
                     escaped = 1;
                     break;
                 case '\0':
-                    out_index++;
+                    
                     break;
                 default:
                     buffer[out_index++] = json[index];
@@ -709,10 +730,9 @@ json_state json_parse_hex(json_char *input, size_t count, json_char *output)
     return json_state_ok;
 }
 
-/*  */
+/* Searching a json_object for a given key */
 static json_value null_value = { .value = NULL, .type = json_type_nothing };
 
-/* Searching a json_object for a given key */
 json_value json_object_find_key(json_object object, json_string key, size_t num)
 {
     for(size_t i = 0 ; i < object.count ; i++)

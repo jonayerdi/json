@@ -1,3 +1,25 @@
+/***********************************************************************************
+zlib License
+
+Copyright (c) 2017 Jon Ayerdi
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+***********************************************************************************/
+
 #ifndef JSON_H
 #define JSON_H
 
@@ -5,7 +27,7 @@
 #include <stdio.h> /* sprintf */
 #include <string.h> /* strlen, strcmp, memcpy, memchr  */
 
-/* Hex digits */
+/* json_char to represented number */
 #define _JSON_IF_IN_RANGE_ELSE(C, RF, RL, I, E) ((((C) >= (RF)) && ((C) <= (RL))) ? (I) : (E))
 #define JSON_DECIMAL_VALUE(CHAR) _JSON_IF_IN_RANGE_ELSE(CHAR, '0', '9', CHAR - '0', -1)
 #define JSON_HEX_VALUE(CHAR) _JSON_IF_IN_RANGE_ELSE(CHAR, '0', '9', CHAR - '0', _JSON_IF_IN_RANGE_ELSE(CHAR, 'A', 'F', CHAR - 'A' + 10, _JSON_IF_IN_RANGE_ELSE(CHAR, 'a', 'f', CHAR - 'a' + 10, -1)))
@@ -40,21 +62,19 @@ typedef char json_char;
 /* Return type for json_* */
 typedef enum _json_state
 {
-    json_state_ok =                 0,
-    json_state_error_malloc =       1<<0,
-    json_state_error_buffer =       1<<1,
-    json_state_error_parse =        1<<2,
-    json_state_error_encoding =     1<<3,
-    json_state_error_type =         1<<4
+    json_state_ok =                 0,          /* OK */
+    json_state_error_malloc =       1<<0,       /* malloc returned NULL */
+    json_state_error_buffer =       1<<1,       /* json string prematurely ended */
+    json_state_error_parse =        1<<2,       /* invalid json string */
 } json_state;
 
 /* json value types */
 typedef enum _json_type
 {
-    json_type_nothing,
-    json_type_null,
-    json_type_true,
-    json_type_false,
+    json_type_nothing,      /* No value provided */
+    json_type_null,         /* No value provided */
+    json_type_true,         /* No value provided */
+    json_type_false,        /* No value provided */
     json_type_string,
     json_type_integer,
     json_type_decimal,
@@ -69,24 +89,30 @@ typedef struct _json_value
     json_type type;
 } json_value;
 
+/* json string type */
 typedef json_char *json_string;
 
+/* json signed integer type */
 typedef signed long long json_integer;
 
+/* json decimal type */
 typedef double json_decimal;
 
+/* json object key-value pair */
 typedef struct _json_key_value
 {
     json_string key;
     json_value value;
 } json_key_value;
 
+/* json key-value collection */
 typedef struct _json_object
 {
     json_key_value *values;
     size_t count;
 } json_object;
 
+/* json value collection */
 typedef struct _json_array
 {
     json_value *values;
