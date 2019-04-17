@@ -245,6 +245,9 @@ json_state json_read_string(const json_char *json, json_size length, json_char *
                 case '\\':
                     escaped = 1;
                     break;
+                case '\0':
+                    // We cannot store this in C strings
+                    break;
                 default:
                     buffer[out_index++] = json[index];
                     break;
