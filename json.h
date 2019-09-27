@@ -131,4 +131,14 @@ json_state json_read_array(const json_char *json, json_size length, json_array *
 /* Searching a json_object for a given key */
 json_value *json_object_find_key(const json_object *object, const json_char *key, json_size num);
 
+/* Get specific type from json_value */
+int json_value_is_null(const json_value *value);
+int json_value_is_true(const json_value *value);
+int json_value_is_false(const json_value *value);
+json_char **json_value_get_string(json_value *value);
+json_integer *json_value_get_integer(json_value *value);
+json_decimal *json_value_get_decimal(json_value *value);
+json_object *json_value_get_object(json_value *value);
+json_array *json_value_get_array(json_value *value);
+
 #endif /* JSON_H */
